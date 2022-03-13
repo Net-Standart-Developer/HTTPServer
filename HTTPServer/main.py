@@ -2,23 +2,21 @@ import socket
 import os
 import sys
 import http
+import asyncio
 
 resources = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources')
 
-def main():
-    listen_address = ("", 8080)
+async def main():
+    listen_address = ("127.0.0.1", 8080)
     max_connections = 10
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
-        server.bind(listen_address)
-        server.listen(max_connections)
+    manager = http.HTTPManager()
 
-        while True:
-            conn, addr = server.accept()
+    server = await asyncio.start_server(
+        manager.Handle, listen_address[0], listen_address[1])
 
-            with conn:
-                manager = http.HTTPManager()
-                manager.Handle(conn, addr)
+    async with server:
+        await server.serve_forever()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

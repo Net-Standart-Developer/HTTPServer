@@ -11,20 +11,22 @@ from main import resources
 class GetController(Controller):
     main_headers = Controller.main_headers
 
-    def __init__(self, client, addr):
-        super().__init__(client, addr, TypeOfRequest.GET, get_end_points)
+    def __init__(self, reader, writer, addr):
+        super().__init__(reader, writer, addr, TypeOfRequest.GET, get_end_points)
 
-    def HandleRequest(self, request):
-        if super().HandleRequest(request) == True:
+    async def HandleRequest(self, request):
+        if await super().HandleRequest(request) == True:
             return True
 
         if managers.FileManager.file_is_exist(resources + request.path.replace("/", "\\")):
             response = getResource(request)
-            self.client.sendall(response.__str__().encode())
+            self.writer.write(response.__str__().encode())
+            await self.writer.drain()
             return True
 
         response = get_end_points["/notfound.html"](request)
-        self.client.sendall(response.__str__().encode())
+        self.writer.write(response.__str__().encode())
+        await self.writer.drain()
         
         return False
 

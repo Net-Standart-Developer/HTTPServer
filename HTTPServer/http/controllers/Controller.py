@@ -7,9 +7,10 @@ class Controller:
         Header(header_type=HeaderType.Server, value="PythonServer")
     ]
 
-    def __init__(self, client, addr, type, end_points_responses) -> None:
+    def __init__(self, reader, writer, addr, type, end_points_responses) -> None:
         self.__type = type
-        self.__client = client
+        self.__reader = reader
+        self.__writer = writer
         self.__addr = addr
         self.__end_points = end_points_responses
 
@@ -18,18 +19,23 @@ class Controller:
         return self.__type
 
     @property
-    def client(self):
-        return self.__client
+    def reader(self):
+        return self.__reader
+
+    @property
+    def writer(self):
+        return self.__writer
     
     @property
     def addr(self):
         return self.__addr
 
-    def HandleRequest(self, request):
+    async def HandleRequest(self, request):
         for end_point in self.__end_points:
             if request.path == end_point:
                 response = self.__end_points[end_point](request)
-                self.__client.sendall(response.__str__().encode())
+                self.__writer.write(response.__str__().encode())
+                await self.__writer.drain()
                 return True
         
         return False
